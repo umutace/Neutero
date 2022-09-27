@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>Neutero</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QTabWidget" name="tabWidget">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>800</width>
+      <height>580</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="inferenceTab">
+     <attribute name="title">
+      <string>Inference</string>
+     </attribute>
+     <widget class="QGroupBox" name="settingsBox">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>775</width>
+        <height>321</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Configuration</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <widget class="QPushButton" name="importNNButton">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>230</y>
+         <width>121</width>
+         <height>30</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Import Topology</string>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="chooseNN">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>180</y>
+         <width>260</width>
+         <height>30</height>
+        </rect>
+       </property>
+       <property name="placeholderText" stdset="0">
+        <string>Choose a Neural Network</string>
+       </property>
+      </widget>
+      <widget class="QGroupBox" name="hwBox">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>30</y>
+         <width>260</width>
+         <height>131</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Hardware Settings</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+       </property>
+       <widget class="QListWidget" name="hwListWidget">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>20</y>
+          <width>260</width>
+          <height>111</height>
+         </rect>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="geometry">
+        <rect>
+         <x>310</x>
+         <y>30</y>
+         <width>445</width>
+         <height>270</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Image Settings</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+       <widget class="QPushButton" name="removeImgButton">
+        <property name="geometry">
+         <rect>
+          <x>250</x>
+          <y>230</y>
+          <width>100</width>
+          <height>30</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Remove Image</string>
+        </property>
+       </widget>
+       <widget class="QListWidget" name="imageView">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>20</y>
+          <width>445</width>
+          <height>200</height>
+         </rect>
+        </property>
+        <property name="selectionMode">
+         <enum>QAbstractItemView::ExtendedSelection</enum>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>64</width>
+          <height>64</height>
+         </size>
+        </property>
+        <property name="movement">
+         <enum>QListView::Static</enum>
+        </property>
+        <property name="resizeMode">
+         <enum>QListView::Fixed</enum>
+        </property>
+        <property name="spacing">
+         <number>4</number>
+        </property>
+        <property name="viewMode">
+         <enum>QListView::IconMode</enum>
+        </property>
+        <property name="batchSize">
+         <number>100</number>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="importImgButton">
+        <property name="geometry">
+         <rect>
+          <x>100</x>
+          <y>230</y>
+          <width>100</width>
+          <height>30</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Import Image</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QPushButton" name="importLabelButton">
+       <property name="geometry">
+        <rect>
+         <x>160</x>
+         <y>230</y>
+         <width>121</width>
+         <height>30</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Import Label</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="nnLabel">
+       <property name="geometry">
+        <rect>
+         <x>50</x>
+         <y>270</y>
+         <width>201</width>
+         <height>30</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Current Label File: not selected</string>
+       </property>
+      </widget>
+      <zorder>groupBox</zorder>
+      <zorder>importNNButton</zorder>
+      <zorder>chooseNN</zorder>
+      <zorder>hwBox</zorder>
+      <zorder>importLabelButton</zorder>
+      <zorder>nnLabel</zorder>
+     </widget>
+     <widget class="QTextBrowser" name="runtimeLog">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>350</y>
+        <width>411</width>
+        <height>161</height>
+       </rect>
+      </property>
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+      <property name="inputMethodHints">
+       <set>Qt::ImhDate|Qt::ImhMultiLine</set>
+      </property>
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOn</enum>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="startButton">
+      <property name="geometry">
+       <rect>
+        <x>520</x>
+        <y>360</y>
+        <width>70</width>
+        <height>40</height>
+       </rect>
+      </property>
+      <property name="palette">
+       <palette>
+        <active>
+         <colorrole role="Button">
+          <brush brushstyle="SolidPattern">
+           <color alpha="246">
+            <red>165</red>
+            <green>218</green>
+            <blue>165</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </active>
+        <inactive>
+         <colorrole role="Button">
+          <brush brushstyle="SolidPattern">
+           <color alpha="246">
+            <red>165</red>
+            <green>218</green>
+            <blue>165</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </inactive>
+        <disabled>
+         <colorrole role="Button">
+          <brush brushstyle="SolidPattern">
+           <color alpha="246">
+            <red>165</red>
+            <green>218</green>
+            <blue>165</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </disabled>
+       </palette>
+      </property>
+      <property name="text">
+       <string>Start</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="stopButton">
+      <property name="geometry">
+       <rect>
+        <x>630</x>
+        <y>360</y>
+        <width>70</width>
+        <height>40</height>
+       </rect>
+      </property>
+      <property name="palette">
+       <palette>
+        <active>
+         <colorrole role="Button">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>254</red>
+            <green>216</green>
+            <blue>216</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </active>
+        <inactive>
+         <colorrole role="Button">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>254</red>
+            <green>216</green>
+            <blue>216</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </inactive>
+        <disabled>
+         <colorrole role="Button">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>254</red>
+            <green>216</green>
+            <blue>216</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </disabled>
+       </palette>
+      </property>
+      <property name="text">
+       <string>Stop</string>
+      </property>
+      <property name="flat">
+       <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="exportResultsButton">
+      <property name="geometry">
+       <rect>
+        <x>620</x>
+        <y>460</y>
+        <width>120</width>
+        <height>40</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Export Results</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="viewResultsButton">
+      <property name="geometry">
+       <rect>
+        <x>480</x>
+        <y>460</y>
+        <width>120</width>
+        <height>40</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>View Results</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="timer">
+      <property name="geometry">
+       <rect>
+        <x>500</x>
+        <y>420</y>
+        <width>211</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Time Elapsed:</string>
+      </property>
+     </widget>
+     <zorder>settingsBox</zorder>
+     <zorder>runtimeLog</zorder>
+     <zorder>startButton</zorder>
+     <zorder>exportResultsButton</zorder>
+     <zorder>viewResultsButton</zorder>
+     <zorder>stopButton</zorder>
+     <zorder>timer</zorder>
+    </widget>
+    <widget class="QWidget" name="benchmarkTab">
+     <attribute name="title">
+      <string>Benchmark</string>
+     </attribute>
+    </widget>
+    <widget class="QWidget" name="aboutTab">
+     <attribute name="title">
+      <string>About</string>
+     </attribute>
+     <widget class="QLabel" name="aboutLabel">
+      <property name="geometry">
+       <rect>
+        <x>150</x>
+        <y>100</y>
+        <width>461</width>
+        <height>191</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;This software has been developed in 2022 by the following team: &lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;br/&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;Oguz Mutlu&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;Yavuz Karaca&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;Rodi Düger&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;Li Junchi&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;Umut Sezen&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>20</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

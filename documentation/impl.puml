@@ -1,0 +1,675 @@
+@startuml
+
+skinparam linetype ortho
+
+/' Objects '/
+package Model {
+	together {
+	class Inference {
+		+Inference(Hardware* hardware, IInferenceProvider* provider, 
+		NeuralNetwork* network, List<Image> inputImages)
+		-m_hardware : Hardware*
+		-m_provider : IInferenceProvider*
+		-m_network : NeuralNetwork*
+		+execute() : bool
+		+getDiagnostics() : std::shared_ptr<DiagnosticData>
+		-m_diagnosticData : std::shared_ptr<DiagnosticData>
+		+getResult() : std::shared_ptr<InferenceResult>
+		-m_results : std::shared_ptr<InferenceResult>
+		-m_inputImages : List<Image>
+	}
+	
+	class Image {
+		+Image(const String filePath)
+		+getImage() : cv::Mat
+		-image : cv::Mat
+		+getSize() : Pair<int , int> {query}
+		+getFilePath() : String {query}
+		-m_filePath : String
+		+resize(int width, int height) : void
+	}
+	}
+	
+	package InferenceProviders {
+		class BackendCommunicator {
+			-BackendCommunicator()
+			+{static} getInstance() : BackendCommunicator*
+			-{static} m_singletonInstance : static BackendCommunicator*
+			+getAllAvailableHardware() : Map<String , List<String>>
+			-m_inferenceProviders : List<IInferenceProvider*>
+		}
+		
+		
+		
+		abstract class IInferenceProvider {
+			+~IInferenceProvider()
+			+{abstract} getDiags() : DiagnosticData
+			+{abstract} getResult() : InferenceResult
+			+{abstract} toString() : String {query}
+			+{abstract} getAllAvailableHardware() : List<Hardware*>
+			-{abstract} convert(NeuralNetwork* network) : void
+			+{abstract} runInference(List<Image> inputImages, NeuralNetwork* network) : void
+			+{abstract} selectHardware(Hardware* hardware) : void
+		}
+		
+		together {
+		abstract class Hardware {
+			+~Hardware()
+			+isConnected() : bool
+			+{abstract} getModelName() : String {query}
+			+{abstract} toString() : String {query}
+		}
+
+		class IntelCPU {
+			+IntelCPU()
+			+getModelName() : String {query}
+			+toString() : String {query}
+		}
+		
+		class IntelMovidius {
+			+IntelMovidius()
+			+getModelName() : String {query}
+			+toString() : String {query}
+		}
+		
+		class NvidiaGPU {
+			+NvidiaGPU()
+			+getModelName() : String {query}
+			+toString() : String {query}
+		}
+		}
+		
+		class OpenVinoInference {
+			+getDiags() : DiagnosticData
+			-m_diags : DiagnosticData
+			-m_hardware : Hardware*
+			-openVinoNetwork : InferenceEngine::CNNNetwork
+			-ie : InferenceEngine::Core
+			+getResult() : InferenceResult
+			-m_result : InferenceResult
+			-matF32ToConstant(const cv::Mat& mat) : std::shared_ptr<ngraph::op::Constant>
+			-matF32ToConstant(const cv::Mat& mat, ngraph::Shape shape) : std::shared_ptr<ngraph::op::Constant>
+			-m_deviceName : String
+			+toString() : String {query}
+			+getAllAvailableHardware() : List<Hardware*>
+			-convert(NeuralNetwork* network) : void
+			-matU8ToBlob(const cv::Mat& orig_image, InferenceEngine::Blob::Ptr& blob, int batchIndex) : void
+			+runInference(List<Image> inputImages, NeuralNetwork* network) : void
+			+selectHardware(Hardware* hardware) : void
+			+setOpenVinoNetwork(InferenceEngine::CNNNetwork network) : void
+		}
+		
+		class TorchInference {
+			+getDiags() : DiagnosticData
+			-m_diags : DiagnosticData
+			-m_hardware : Hardware*
+			+getResult() : InferenceResult
+			-m_result : InferenceResult
+			-m_deviceName : String
+			+toString() : String {query}
+			+getAllAvailableHardware() : List<Hardware*>
+			-m_torchModel : torch::nn::Sequential
+			-convert(NeuralNetwork* network) : void
+			+runInference(List<Image> inputImages, NeuralNetwork* network) : void
+			+selectHardware(Hardware* hardware) : void
+			+setTorchModel(torch::nn::Sequential model) : void
+		}
+
+
+	}
+	
+	package NNRepresentation {
+		together {	
+		abstract class INNBuilder {
+			+~INNBuilder()
+			+{abstract} getResult() : NeuralNetwork*
+			+{abstract} buildLayers() : void
+			+{abstract} reset() : void
+			+{abstract} setFilePath(String filePath) : void
+			+{abstract} setWeights() : void
+		}
+		
+		class NNParser {
+			+NNParser(String filePath)
+			-m_builder : INNBuilder*
+			+make() : NeuralNetwork*
+			-m_filePath : String
+			+changeBuilder(INNBuilder* builder) : void
+		}
+		
+		class NeuralNetwork {
+			+NeuralNetwork(const String filePath)
+			+getInChannel() : int {query}
+			-m_inChannel : int
+			+getInputImageSize() : Pair<int , int>
+			-m_inputImageSize : Pair<int, int>
+			+getNode(unsigned int index) : std::shared_ptr<Node>
+			+getFilePath() : String
+			-m_filePath : String
+			-m_topologyList : List<std::shared_ptr<Node>>
+			-m_labels : List<String>
+			+getTopologyListSize() : unsigned int
+			+addNode(std::shared_ptr<Node> node) : void
+			+setInChannel(int inChannel) : void
+			+setInputImageSize(const Pair<int, int>& inputSize) : void
+		}
+		
+		class NeuteroBuilderONNX {
+			+getResult() : NeuralNetwork*
+			-m_result : NeuralNetwork*
+			-m_openCVNetwork : cv::dnn::Net
+			-m_filePath : String
+			+buildLayers() : void
+			+reset() : void
+			+setFilePath(String filePath) : void
+			+setWeights() : void
+		}
+		}
+		together {	
+		class Node {
+			#Node(String identifier, String type)
+			+~Node()
+			+operator<(const Node& other) : bool {query}
+			+operator>(const Node& other) : bool {query}
+			+getIdentifier() : String {query}
+			+getType() : String {query}
+			#m_identifier : String
+			#m_type : String
+			+setIdentifier(String identifier) : void
+		}
+		
+		class Abs {
+			+Abs(String identifier)
+		}
+		
+		class BatchNorm {
+			+BatchNorm(String identifier, int numFeatures, double eps)
+			-m_eps : double
+			-m_numFeatures : int
+		}
+		
+		class ConvolutionalLayer {
+			+ConvolutionalLayer(String identifier, int inChannel,
+			 int outChannel, int kernelSize, int stride, int padding, int dilation)
+			+bias() : cv::Mat {query}
+			-m_bias : cv::Mat
+			-m_weights : cv::Mat
+			+weights() : cv::Mat {query}
+			+dilation() : int {query}
+			+inChannel() : int {query}
+			+kernelSize() : int {query}
+			-m_dilation : int
+			-m_inChannel : int
+			-m_kernelSize : int
+			-m_outChannel : int
+			-m_padding : int
+			-m_stride : int
+			+outChannel() : int {query}
+			+padding() : int {query}
+			+stride() : int {query}
+			+setBias(cv::Mat& bias) : void
+			+setWeights(cv::Mat& weights) : void
+		}
+		
+		class Flatten {
+			+Flatten(String identifier, int startDim, int endDim)
+			+endDim() : int {query}
+			-m_endDim : int
+			-m_startDim : int
+			+startDim() : int {query}
+		}
+		
+		class FullyConnectedLayer {
+			+FullyConnectedLayer(String identifier, int inFeature, int outFeature)
+			+bias() : cv::Mat {query}
+			-m_bias : cv::Mat
+			-m_weight : cv::Mat
+			+weight() : cv::Mat {query}
+			+inFeature() : int {query}
+			-m_inFeature : int
+			-m_outFeature : int
+			+outFeature() : int {query}
+			+setBias(cv::Mat& bias) : void
+			+setWeight(cv::Mat& weight) : void
+		}
+		class MaxPool {
+			+MaxPool(String identifier, int kernelSize, 
+			int stride, int padding, int dilation, bool ceilMode)
+			+ceilMode() : bool {query}
+			-m_ceilMode : bool
+			+dilation() : int {query}
+			+kernelSize() : int {query}
+			-m_dilation : int
+			-m_kernelSize : int
+			-m_padding : int
+			-m_stride : int
+			+padding() : int {query}
+			+stride() : int {query}
+		}
+
+		class Relu {
+			+Relu(String identifier)
+		}
+		
+		class Sigmoid {
+			+Sigmoid(String identifier)
+		}
+		
+		class SoftMax {
+			+SoftMax(String identifier, int dim)
+			+dim() : int {query}
+			-m_dim : int
+		}
+		}
+	}
+	
+	package ResultsDiags {
+		class DiagnosticData {
+			+DiagnosticData()
+			+elapsedTime() : double {query}
+			-m_elapsedTime : double
+			-m_numberOfImages : int
+			+numberOfImages() : int {query}
+			+hardwareData() : String {query}
+			-m_hardwareData : String
+			+toString() : String {query}
+			+setElapsedTime(double elapsedTime) : void
+			+setHardwareData(String hardwareData) : void
+			+setNumberOfImages(int numberOfImages) : void
+		}
+		
+		class InferenceResult {
+			+InferenceResult()
+			+elapsedTime() : double {query}
+			-m_elapsedTime : double
+			+toString(bool sortedByConfidence) : String {query}
+			-m_results : List<SingleImageInferenceResult>
+			+results() : List<SingleImageInferenceResult> {query}
+			+setElapsedTime(double elapsedTime) : void
+			+setLabels(String filePath) : void
+			+setResults(List<SingleImageInferenceResult> results) : void
+		}
+		
+		class SingleImageInferenceResult {
+			+SingleImageInferenceResult(std::shared_ptr<Image> image, Map<String, String> confidences)
+			+getConfidences() : Map<String , String> {query}
+			-m_confidences : Map<String, String>
+			+getImage() : std::shared_ptr<Image>
+			-m_image : std::shared_ptr<Image>
+			+toString(bool sortedByConfidence) : String {query}
+			+getSortedConfidences() : List<Pair<String , String>> {query}
+			-m_sortedConfidences : List<Pair<String, String>>
+			+setLabels(String filePath) : void
+			-sortByConfidence() : void
+		}
+	}
+
+}
+
+package Controller {
+	package InferenceRunner {
+		class InferenceManager {
+			-InferenceManager()
+			+{static} getInstance() : InferenceManager*
+			+getState() : InferenceState
+			-state : InferenceState
+			+abortInference() : bool
+			+createInferences() : bool
+			+runInference() : bool
+			-{static} m_singletonInstance : inline static InferenceManager*
+			-creator : std::shared_ptr<IInferenceCreator>
+			+getCreator() : std::shared_ptr<IInferenceCreator>
+			-labelFilePath : String
+			-observers : List<IObserver*>
+			+getAllResultsAndDiagnostics() : List<Pair<std::shared_ptr<InferenceResult>, 
+			std::shared_ptr<DiagnosticData>>>
+			-currentInferences : List<std::shared_ptr<Inference>>
+			+checkIfRunnable() : void
+			+notify() : void
+			+registerObserver(IObserver* observer) : void
+			+removeObserver(IObserver* observer) : void
+			+setCreator(std::shared_ptr<IInferenceCreator> creator) : void
+			+setLabelFilePath(String labelFilePath) : void
+			+setState(InferenceState state) : void
+		}
+		
+		enum InferenceState {
+			COMPLETED
+			NOT_READY
+			RUNNABLE
+			RUNNING
+		}
+
+		abstract class ISubject {
+			+~ISubject()
+			+{abstract} notify() : void
+			+{abstract} registerObserver(IObserver* observer) : void
+			+{abstract} removeObserver(IObserver* observer) : void
+		}
+
+		.ISubject <|-- .InferenceManager
+	}
+	
+	package ParameterConfigurator {
+		class IParameterConfigurator {
+			+~IParameterConfigurator()
+			+isReady() : bool
+			#ready : bool
+			+setParameter(object param) : bool
+			+getParameter() : object
+		}
+
+		class NNController {
+			+NNController()
+			+getParameter() : NeuralNetwork*
+			+setParameter(String nnID) : bool
+			-{static} m_networks : inline static Map<String, NeuralNetwork*>
+			-{static} NOT_SET : inline static Pair<String, NeuralNetwork*>
+			-currentNetwork : Pair<String, NeuralNetwork*>
+			+import(String nnPath) : String
+			+getList() : List<String>
+		}
+
+		class HWController {
+			+HWController()
+			-bc : BackendCommunicator*
+			-parseHardwareName(String hwname) : Hardware*
+			-parseProviderName(String prname) : IInferenceProvider*
+			+removeHardwareProviderPair(String hwAndProvider) : bool
+			+setParameter(String hardwareAndBackend) : bool
+			+getParameter() : List<Pair<Hardware* , IInferenceProvider*>>
+			-selectedHardwares : List<Pair<Hardware*, IInferenceProvider*>>
+			+getList() : List<String>
+		}
+
+		class ImageController {
+			+ImageController()
+			+setParameter(List<String> imageFilePaths) : bool
+			-{static} m_images : inline static List<Image>
+			+getParameter() : List<Image>
+			+removeImage(String imagePath) : void
+			+resizeAll(int width, int height) : void
+		}
+		
+	}
+
+	class DefaultInferenceCreator {
+		+DefaultInferenceCreator(ImageController* imgsrc, HWController* hwsrc, NNController* nnsrc)
+		+hwSource() : HWController* {query}
+		-m_hwSource : HWController*
+		+imageSource() : ImageController* {query}
+		-m_imageSource : ImageController*
+		-m_nnSource : NNController*
+		+nnSource() : NNController* {query}
+		+fixParameters() : bool
+		+isReady() : bool
+		+buildInferences() : List<std::shared_ptr<Inference>>
+	}
+
+	abstract class IInferenceCreator {
+		+~IInferenceCreator()
+		+{abstract} fixParameters() : bool
+		+{abstract} isReady() : bool
+		+{abstract} buildInferences() : List<std::shared_ptr<Inference>>
+	}
+
+}
+
+package View {
+	abstract class IObserver {
+		+~IObserver()
+		+{abstract} update(InferenceState state) : void
+	}
+	
+	class MainWindow {
+		+MainWindow(QWidget* parent)
+		+~MainWindow()
+		-hwController : HWController*
+		-imgController : ImageController*
+		-nnController : NNController*
+		-elapsedTimer : QElapsedTimer
+		-updateTimer : QTimer
+		-rw : ResultWindow*
+		-ui : Ui::MainWindow*
+		-on_chooseNN_activated(int index) : void
+		-on_exportResultsButton_clicked() : void
+		-on_hwListWidget_itemActivated(QListWidgetItem* item) : void
+		-on_imageView_itemSelectionChanged() : void
+		-on_importImgButton_clicked() : void
+		-on_importLabelButton_clicked() : void
+		-on_importNNButton_clicked() : void
+		-on_removeImgButton_clicked() : void
+		-on_startButton_clicked() : void
+		-on_stopButton_clicked() : void
+		-on_viewResultsButton_clicked() : void
+		+print(QString text) : void
+		-startTimer() : void
+		-stopTimer() : void
+		+update(InferenceState state) : void
+		-updateTimerLabel(bool showMilliseconds) : void
+	}
+	
+	class ResultWindow {
+		+ResultWindow(QWidget* parent)
+		+~ResultWindow()
+		-ui : Ui::ResultWindow*
+	}
+	
+	class ResultWindowCreator {
+		+ResultWindowCreator(QVector<InferenceResult> results)
+		-m_results : QVector<InferenceResult>
+		+generateResultWindow() : void
+	}
+	
+	class hardwareDialog {
+		+hardwareDialog(QWidget* parent)
+	}
+
+}
+
+
+
+		.INNBuilder <|-- .NeuteroBuilderONNX
+		.Node <|-- .Abs
+		.Node <|--- .BatchNorm
+		.Node <|---- .ConvolutionalLayer
+		.Node <|-- .Flatten
+		.Node <|--- .FullyConnectedLayer
+		.Node <|---- .MaxPool
+		.Node <|-- .Relu
+		.Node <|--- .Sigmoid
+		.Node <|---- .SoftMax
+	.IInferenceCreator <|-- .DefaultInferenceCreator
+	.DefaultInferenceCreator o--- .HWController
+	.DefaultInferenceCreator o--- .ImageController
+	.DefaultInferenceCreator o--- .NNController
+	.IObserver <|-- .MainWindow
+		.IParameterConfigurator <|-- .HWController
+		.IParameterConfigurator <|-- .ImageController
+		.IParameterConfigurator <|-- .NNController
+		.Hardware <|-- .IntelCPU
+		.Hardware <|-- .IntelMovidius
+		.Hardware <|-- .NvidiaGPU
+		.IInferenceProvider <|-- .OpenVinoInference
+		.IInferenceProvider <|-- .TorchInference
+
+/' Aggregation relationships '/
+
+.BackendCommunicator o-- .BackendCommunicator
+.BackendCommunicator o--left .IInferenceProvider
+
+
+
+
+.HWController o-- .BackendCommunicator
+.HWController o-- .Hardware
+.HWController o--- .IInferenceProvider
+.ImageController *-- .Image
+
+.Inference *-- .DiagnosticData
+.Inference o-- .Hardware
+.Inference o--- .IInferenceProvider
+.Inference *- .Image
+.Inference *-- .InferenceResult
+.Inference o--left .NeuralNetwork
+
+.InferenceManager *-- .IInferenceCreator
+
+
+.InferenceManager o---- .IObserver
+
+
+.InferenceManager *-- .Inference
+
+
+.InferenceManager o-- .InferenceManager
+
+
+.InferenceManager *-left .InferenceState
+
+
+.InferenceResult *-- .SingleImageInferenceResult
+
+
+.MainWindow o-- .HWController
+
+
+.MainWindow o-- .ImageController
+
+
+.MainWindow o-- .MainWindow
+
+
+.MainWindow o-- .NNController
+
+
+.MainWindow o- .ResultWindow
+
+
+.NNController "3" o--- .NeuralNetwork
+
+
+.NNParser o- .INNBuilder
+
+
+.NeuralNetwork *-left .Node
+
+
+.NeuteroBuilderONNX o- .NeuralNetwork
+
+
+.OpenVinoInference *-- .DiagnosticData
+
+
+.OpenVinoInference o-- .Hardware
+
+
+.OpenVinoInference *-- .InferenceResult
+
+
+.ResultWindow o-- .ResultWindow
+
+
+.ResultWindowCreator *- .InferenceResult
+
+
+.SingleImageInferenceResult *--up .Image
+
+
+.TorchInference *-- .DiagnosticData
+
+
+.TorchInference o- .Hardware
+
+
+.TorchInference *-- .InferenceResult
+
+
+
+
+/' Dependency relationships '/
+
+' .HWController <.. .DefaultInferenceCreator
+
+
+' .Hardware <.. .IInferenceProvider
+
+
+' .Hardware <.. .Inference
+
+
+' .Hardware <.. .OpenVinoInference
+
+
+' .Hardware <.. .TorchInference
+
+
+' .INNBuilder <.. .NNParser
+
+
+' .IObserver <.. .ISubject
+
+
+' .IObserver <.. .InferenceManager
+
+
+' .Image <.. .IInferenceProvider
+
+
+' .Image <.. .Inference
+
+
+' .Image <.. .OpenVinoInference
+
+
+' .Image <.. .SingleImageInferenceResult
+
+
+' .Image <.. .TorchInference
+
+
+' .ImageController <.. .DefaultInferenceCreator
+
+
+' .Inference <.. .IObserver
+
+
+' .Inference <.. .Inference
+
+
+' .Inference <.. .InferenceManager
+
+
+
+
+' .Inference <.. .InferenceResult
+
+
+' .Inference <.. .MainWindow
+
+
+' .Inference <.. .OpenVinoInference
+
+
+
+
+' .Inference <.. .ResultWindowCreator
+
+
+' .NNController <.. .DefaultInferenceCreator
+
+
+' .NeuralNetwork <.. .IInferenceProvider
+' .NeuralNetwork <.. .Inference
+' .NeuralNetwork <.. .OpenVinoInference
+' .NeuralNetwork <.. .TorchInference
+
+' .Node <.. .NeuralNetwork
+
+
+
+/' Nested objects '/
+
+
+
+@enduml

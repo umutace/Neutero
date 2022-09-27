@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/default-networks">
+        <file>lenet_MNIST.onnx</file>
+        <file>NiN_cifar.onnx</file>
+    </qresource>
+</RCC>
